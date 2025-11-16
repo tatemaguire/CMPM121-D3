@@ -62,6 +62,7 @@ playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
 
 // Display the player's points
+let playerPoints = 0;
 statusPanelDiv.innerHTML = "No points yet...";
 
 // Add caches to the map by cell numbers
@@ -77,14 +78,29 @@ function spawnCache(i: number, j: number) {
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
 
-  // Display text on the cache
-  const tooltip = leaflet.tooltip({ permanent: true, direction: "center" })
-    .setContent("1");
-  rect.bindTooltip(tooltip);
+  // Handle interactions with the cache
+  rect.bindPopup(() => {
+    // Each cache has a random point value, mutable by the player
+    let pointValue = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
 
-  // Click mouseevent
-  rect.on("click", () => {
-    console.log("clicked!");
+    // The popup offers a description and button
+    const popupDiv = document.createElement("div");
+    popupDiv.innerHTML = `
+                <div>There is a cache here at "${i},${j}". It has value <span id="value">${pointValue}</span>.</div>
+                <button id="poke">poke</button>`;
+
+    // Clicking the button decrements the cache's value and increments the player's points
+    popupDiv
+      .querySelector<HTMLButtonElement>("#poke")!
+      .addEventListener("click", () => {
+        pointValue--;
+        popupDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML =
+          pointValue.toString();
+        playerPoints++;
+        statusPanelDiv.innerHTML = `${playerPoints} points accumulated`;
+      });
+
+    return popupDiv;
   });
 }
 
