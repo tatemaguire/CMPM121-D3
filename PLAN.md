@@ -26,7 +26,10 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] draw the rectangles using hash function
 - [x] draw the value on each token
 - [x] make rectangles interactable
-- [ ] find a way to represent rectangle values
-- [ ] make rectangle interaction update the inventory
-- [ ] display the player's inventory
-- [ ] make rect interaction merge tiles if inventory full
+- [x] find a way to represent rectangle values
+- [x] make rectangle interaction update the inventory
+- [x] display the player's inventory
+- [x] make rect interaction merge tiles if inventory full
+- [x] limit interaction to a certain range
+- [x] make tiles reach the edge of the screen
+- [x] clean up code
