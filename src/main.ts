@@ -76,8 +76,8 @@ const playerPosition = CLASSROOM_LATLNG;
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
   const bounds = leaflet.latLngBounds([
-    [indexToCoord(i), indexToCoord(j)],
-    [indexToCoord(i + 1), indexToCoord(j + 1)],
+    pointIndexToCoord({ x: i, y: j }),
+    pointIndexToCoord({ x: i + 1, y: j + 1 }),
   ]);
 
   let cachePoints = Math.pow(
@@ -113,15 +113,11 @@ generateCells();
 
 function generateCells() {
   rectangleGroup.clearLayers();
-  const mapCenter = map.getCenter();
-  const mapCenterIndex = {
-    x: coordToIndex(mapCenter.lat),
-    y: coordToIndex(mapCenter.lng),
-  };
+  const mapCenter = pointCoordToIndex(map.getCenter());
   for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
     for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
-      const x = mapCenterIndex.x + i;
-      const y = mapCenterIndex.y + j;
+      const x = mapCenter.x + i;
+      const y = mapCenter.y + j;
       if (luck([x, y].toString()) < CACHE_SPAWN_PROBABILITY) {
         spawnCache(x, y);
       }
@@ -130,10 +126,7 @@ function generateCells() {
 }
 
 function distance_to_player(i: number, j: number) {
-  const playerPoint = {
-    x: coordToIndex(playerPosition.lat),
-    y: coordToIndex(playerPosition.lng),
-  };
+  const playerPoint = pointCoordToIndex(playerPosition);
   const dx = i - playerPoint.x;
   const dy = j - playerPoint.y;
   return Math.sqrt((dx ** 2) + (dy ** 2));
@@ -145,4 +138,12 @@ function indexToCoord(i: number) {
 
 function coordToIndex(c: number) {
   return Math.floor(c / TILE_DEGREES);
+}
+
+function pointIndexToCoord(p: Point): leaflet.LatLng {
+  return leaflet.latLng(indexToCoord(p.x), indexToCoord(p.y));
+}
+
+function pointCoordToIndex(ll: leaflet.LatLng): Point {
+  return { x: coordToIndex(ll.lat), y: coordToIndex(ll.lng) };
 }
