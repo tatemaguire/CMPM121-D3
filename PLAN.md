@@ -33,3 +33,15 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 - [x] limit interaction to a certain range
 - [x] make tiles reach the edge of the screen
 - [x] clean up code
+
+### D3.b: Core mechanics (token collection and crafting)
+
+Key technical challenge: Can you make cell generation react to player movement and map scrolling?
+Key gameplay challenge: Can players reach the win condition?
+
+#### Steps
+
+- [x] Create functions for index to coordinate conversion
+- [x] Create generate cells function to spawn cells around the given location
+- [ ] Have generate cells function called on player position change and map scroll
+- [ ]

@@ -4,6 +4,12 @@ import "./_leafletWorkaround.ts";
 import luck from "./_luck.ts";
 import "./style.css";
 
+// Interfaces
+interface Point {
+  x: number;
+  y: number;
+}
+
 // Create basic UI elements
 
 const controlPanelDiv = document.createElement("div");
@@ -57,13 +63,14 @@ playerMarker.addTo(map);
 let playerPoints = 0;
 statusPanelDiv.innerHTML = "No points yet...";
 
+const playerPosition = CLASSROOM_LATLNG;
+
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
-  const origin = CLASSROOM_LATLNG;
   const bounds = leaflet.latLngBounds([
-    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
-    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
+    [indexToCoord(i), indexToCoord(j)],
+    [indexToCoord(i + 1), indexToCoord(j + 1)],
   ]);
 
   let cachePoints = Math.pow(
@@ -95,16 +102,32 @@ function spawnCache(i: number, j: number) {
   });
 }
 
-// Look around the player's neighborhood for caches to spawn
-for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
-  for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
-    // If location i,j is lucky enough, spawn a cache!
-    if (luck([i, j].toString()) < CACHE_SPAWN_PROBABILITY) {
-      spawnCache(i, j);
+generateCells({
+  x: coordToIndex(playerPosition.lat),
+  y: coordToIndex(playerPosition.lng),
+});
+
+function generateCells(origin: Point) {
+  console.log(origin);
+  for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
+    for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
+      const x = origin.x + i;
+      const y = origin.y + j;
+      if (luck([x, y].toString()) < CACHE_SPAWN_PROBABILITY) {
+        spawnCache(x, y);
+      }
     }
   }
 }
 
 function distance_to(i: number, j: number) {
   return Math.sqrt((i ** 2) + (j ** 2));
+}
+
+function indexToCoord(i: number) {
+  return i * TILE_DEGREES;
+}
+
+function coordToIndex(c: number) {
+  return Math.floor(c / TILE_DEGREES);
 }
