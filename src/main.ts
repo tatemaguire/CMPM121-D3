@@ -4,13 +4,18 @@ import "./_leafletWorkaround.ts";
 import luck from "./_luck.ts";
 import "./style.css";
 
-// Interfaces
+////////////////////////////////////////////////////
+/////////////////// INTERFACES /////////////////////
+////////////////////////////////////////////////////
+
 interface Point {
   x: number;
   y: number;
 }
 
-// Create basic UI elements
+////////////////////////////////////////////////////
+////////////////// UI ELEMENTS /////////////////////
+////////////////////////////////////////////////////
 
 const controlPanelDiv = document.createElement("div");
 controlPanelDiv.id = "controlPanel";
@@ -22,13 +27,47 @@ document.body.append(mapDiv);
 
 const statusPanelDiv = document.createElement("div");
 statusPanelDiv.id = "statusPanel";
+statusPanelDiv.innerHTML = "No points yet...";
 document.body.append(statusPanelDiv);
+
+// Movement Buttons (For testing)
 
 const buttonPanelDiv = document.createElement("div");
 buttonPanelDiv.id = "buttonPanel";
 document.body.append(buttonPanelDiv);
 
-// Our classroom location
+const leftButton = document.createElement("button");
+leftButton.innerHTML = "MOVE: Left";
+leftButton.addEventListener("click", () => {
+  move_player({ x: -1, y: 0 });
+});
+
+const rightButton = document.createElement("button");
+rightButton.innerHTML = "MOVE: Right";
+rightButton.addEventListener("click", () => {
+  move_player({ x: 1, y: 0 });
+});
+
+const upButton = document.createElement("button");
+upButton.innerHTML = "MOVE: Up";
+upButton.addEventListener("click", () => {
+  move_player({ x: 0, y: 1 });
+});
+
+const downButton = document.createElement("button");
+downButton.innerHTML = "MOVE: Down";
+downButton.addEventListener("click", () => {
+  move_player({ x: 0, y: -1 });
+});
+buttonPanelDiv.appendChild(leftButton);
+buttonPanelDiv.appendChild(rightButton);
+buttonPanelDiv.appendChild(upButton);
+buttonPanelDiv.appendChild(downButton);
+
+////////////////////////////////////////////////////
+//////////////////// CONSTANTS /////////////////////
+////////////////////////////////////////////////////
+
 const CLASSROOM_LATLNG = leaflet.latLng(
   36.997936938057016,
   -122.05703507501151,
@@ -41,6 +80,10 @@ const NEIGHBORHOOD_SIZE = 25;
 const CACHE_SPAWN_PROBABILITY = 0.1;
 const RANGE = 4;
 
+////////////////////////////////////////////////////
+///////////////// LEAFLET SETUP ////////////////////
+////////////////////////////////////////////////////
+
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
   center: CLASSROOM_LATLNG,
@@ -51,9 +94,7 @@ const map = leaflet.map(mapDiv, {
   scrollWheelZoom: false,
 });
 
-map.on("moveend", () => {
-  generateCells();
-});
+map.on("moveend", generateCells);
 
 // Populate the map with a background tile layer
 leaflet
@@ -71,12 +112,39 @@ let playerMarker = leaflet.marker(CLASSROOM_LATLNG);
 playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
 
-let playerPoints = 0;
-statusPanelDiv.innerHTML = "No points yet...";
+////////////////////////////////////////////////////
+///////////// PLAYER MOVEMENT AND WIN //////////////
+////////////////////////////////////////////////////
 
+let playerInventory = 0;
 const playerPosition = CLASSROOM_LATLNG;
 
-// Add caches to the map by cell numbers
+function move_player(dir: Point) {
+  playerPosition.lat += indexToCoord(dir.y);
+  playerPosition.lng += indexToCoord(dir.x);
+  playerMarker.remove();
+  playerMarker = leaflet.marker(playerPosition);
+  playerMarker.bindTooltip("That's you!");
+  playerMarker.addTo(map);
+}
+
+function distance_to_player(i: number, j: number) {
+  const playerPoint = pointCoordToIndex(playerPosition);
+  const dx = i - playerPoint.x;
+  const dy = j - playerPoint.y;
+  return Math.sqrt((dx ** 2) + (dy ** 2));
+}
+
+function check_win(just_made: number) {
+  if (just_made >= 32) {
+    statusPanelDiv.innerHTML = "You won!! Great job making " + just_made;
+  }
+}
+
+////////////////////////////////////////////////////
+//////////////// CELL GENERATION ///////////////////
+////////////////////////////////////////////////////
+
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
   const bounds = leaflet.latLngBounds([
@@ -100,14 +168,15 @@ function spawnCache(i: number, j: number) {
 
   rect.on("click", () => {
     if (distance_to_player(i, j) >= RANGE) return;
-    if (playerPoints == 0) {
-      playerPoints = cachePoints;
+    if (playerInventory == 0) {
+      playerInventory = cachePoints;
       rect.remove();
-      statusPanelDiv.innerHTML = `You are carrying: ${playerPoints}`;
-    } else if (playerPoints == cachePoints) {
+      statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+    } else if (playerInventory == cachePoints) {
       cachePoints *= 2;
-      playerPoints = 0;
+      playerInventory = 0;
       statusPanelDiv.innerHTML = `Merged!`;
+      check_win(cachePoints);
     }
     tooltip.setContent(cachePoints.toString());
   });
@@ -129,12 +198,9 @@ function generateCells() {
   }
 }
 
-function distance_to_player(i: number, j: number) {
-  const playerPoint = pointCoordToIndex(playerPosition);
-  const dx = i - playerPoint.x;
-  const dy = j - playerPoint.y;
-  return Math.sqrt((dx ** 2) + (dy ** 2));
-}
+////////////////////////////////////////////////////
+/////////////// HELPER FUNCTIONS ///////////////////
+////////////////////////////////////////////////////
 
 function indexToCoord(i: number) {
   return i * TILE_DEGREES;
@@ -151,59 +217,3 @@ function pointIndexToCoord(p: Point): leaflet.LatLng {
 function pointCoordToIndex(ll: leaflet.LatLng): Point {
   return { x: coordToIndex(ll.lat), y: coordToIndex(ll.lng) };
 }
-
-// Player Movement
-
-function move_player(dir: Point) {
-  playerPosition.lat += indexToCoord(dir.y);
-  playerPosition.lng += indexToCoord(dir.x);
-  playerMarker.remove();
-  playerMarker = leaflet.marker(playerPosition);
-  playerMarker.bindTooltip("That's you!");
-  playerMarker.addTo(map);
-}
-
-const DIRECTION_RIGHT: Point = {
-  x: 1,
-  y: 0,
-};
-const DIRECTION_LEFT: Point = {
-  x: -1,
-  y: 0,
-};
-const DIRECTION_UP: Point = {
-  x: 0,
-  y: 1,
-};
-const DIRECTION_DOWN: Point = {
-  x: 0,
-  y: -1,
-};
-
-const LEFT = document.createElement("button");
-LEFT.innerHTML = "MOVE: Left";
-LEFT.addEventListener("click", () => {
-  move_player(DIRECTION_LEFT);
-});
-
-const RIGHT = document.createElement("button");
-RIGHT.innerHTML = "MOVE: Right";
-RIGHT.addEventListener("click", () => {
-  move_player(DIRECTION_RIGHT);
-});
-
-const UP = document.createElement("button");
-UP.innerHTML = "MOVE: Up";
-UP.addEventListener("click", () => {
-  move_player(DIRECTION_UP);
-});
-
-const DOWN = document.createElement("button");
-DOWN.innerHTML = "MOVE: Down";
-DOWN.addEventListener("click", () => {
-  move_player(DIRECTION_DOWN);
-});
-buttonPanelDiv.appendChild(LEFT);
-buttonPanelDiv.appendChild(RIGHT);
-buttonPanelDiv.appendChild(UP);
-buttonPanelDiv.appendChild(DOWN);

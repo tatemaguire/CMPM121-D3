@@ -48,4 +48,12 @@ Key gameplay challenge: Can players reach the win condition?
 - [x] Clear layergroup in generateCells function
 - [x] Rewrite distance_to to be distance_to_player
 - [x] Create functions for index to coordinate conversion of _points_
-- [ ] Have generate cells function called on player position change
+- [x] Implement player movement
+- [x] Check win condition
+- [x] Clean up, organized code into separate sections
+
+### D3.c
+
+#### Steps
+
+- [ ] Use temp layerGroup to avoid overwriting previous rectangles on generate cells
