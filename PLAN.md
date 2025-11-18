@@ -51,6 +51,7 @@ Key gameplay challenge: Can players reach the win condition?
 - [x] Implement player movement
 - [x] Check win condition
 - [x] Clean up, organized code into separate sections
+- [x] Removed unnecessary constants
 
 ### D3.c
 
