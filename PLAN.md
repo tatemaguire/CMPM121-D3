@@ -43,5 +43,8 @@ Key gameplay challenge: Can players reach the win condition?
 
 - [x] Create functions for index to coordinate conversion
 - [x] Create generate cells function to spawn cells around the given location
-- [ ] Have generate cells function called on player position change and map scroll
-- [ ]
+- [x] Have generate cells function called on map scroll
+- [x] Create layergroup for all rectangles
+- [x] Clear layergroup in generateCells function
+- [x] Rewrite distance_to to be distance_to_player
+- [ ] Have generate cells function called on player position change

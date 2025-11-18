@@ -47,6 +47,10 @@ const map = leaflet.map(mapDiv, {
   scrollWheelZoom: false,
 });
 
+map.on("moveend", () => {
+  generateCells();
+});
+
 // Populate the map with a background tile layer
 leaflet
   .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -54,6 +58,9 @@ leaflet
     attribution:
       '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   })
+  .addTo(map);
+
+const rectangleGroup = leaflet.layerGroup()
   .addTo(map);
 
 const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
@@ -80,7 +87,7 @@ function spawnCache(i: number, j: number) {
 
   // Add a rectangle to the map to represent the cache
   const rect = leaflet.rectangle(bounds);
-  rect.addTo(map);
+  rect.addTo(rectangleGroup);
 
   // Display text on the cache
   const tooltip = leaflet.tooltip({ permanent: true, direction: "center" })
@@ -88,7 +95,7 @@ function spawnCache(i: number, j: number) {
   rect.bindTooltip(tooltip);
 
   rect.on("click", () => {
-    if (distance_to(i, j) >= RANGE) return;
+    if (distance_to_player(i, j) >= RANGE) return;
     if (playerPoints == 0) {
       playerPoints = cachePoints;
       rect.remove();
@@ -102,17 +109,19 @@ function spawnCache(i: number, j: number) {
   });
 }
 
-generateCells({
-  x: coordToIndex(playerPosition.lat),
-  y: coordToIndex(playerPosition.lng),
-});
+generateCells();
 
-function generateCells(origin: Point) {
-  console.log(origin);
+function generateCells() {
+  rectangleGroup.clearLayers();
+  const mapCenter = map.getCenter();
+  const mapCenterIndex = {
+    x: coordToIndex(mapCenter.lat),
+    y: coordToIndex(mapCenter.lng),
+  };
   for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
     for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
-      const x = origin.x + i;
-      const y = origin.y + j;
+      const x = mapCenterIndex.x + i;
+      const y = mapCenterIndex.y + j;
       if (luck([x, y].toString()) < CACHE_SPAWN_PROBABILITY) {
         spawnCache(x, y);
       }
@@ -120,8 +129,14 @@ function generateCells(origin: Point) {
   }
 }
 
-function distance_to(i: number, j: number) {
-  return Math.sqrt((i ** 2) + (j ** 2));
+function distance_to_player(i: number, j: number) {
+  const playerPoint = {
+    x: coordToIndex(playerPosition.lat),
+    y: coordToIndex(playerPosition.lng),
+  };
+  const dx = i - playerPoint.x;
+  const dy = j - playerPoint.y;
+  return Math.sqrt((dx ** 2) + (dy ** 2));
 }
 
 function indexToCoord(i: number) {
