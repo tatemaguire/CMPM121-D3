@@ -58,4 +58,5 @@ Key gameplay challenge: Can players reach the win condition?
 #### Steps for c
 
 - [x] Use a Map to keep track of altered cells
-- [ ] Restore altered cell states after generating cells
+- [x] Restore altered cell states after generating cells
+- [ ] Clean up

@@ -76,7 +76,7 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
-const NEIGHBORHOOD_SIZE = 25;
+const NEIGHBORHOOD_SIZE = 20;
 const CACHE_SPAWN_PROBABILITY = 0.1;
 const RANGE = 4;
 
@@ -154,10 +154,16 @@ function spawnCache(i: number, j: number) {
     pointIndexToCoord({ x: i + 1, y: j + 1 }),
   ]);
 
-  let cachePoints = Math.pow(
-    2,
-    Math.floor(luck([i, j, "initialValue"].toString()) * 4),
-  );
+  // get cachePoints from cellMap if it exists, otherwise generate value
+  let storedCachePoints = cellMap.get(pointIndexToString({ x: i, y: j }));
+  if (storedCachePoints == 0) return;
+  if (storedCachePoints == undefined) {
+    storedCachePoints = Math.pow(
+      2,
+      Math.floor(luck([i, j, "init"].toString()) * 4),
+    );
+  }
+  let cachePoints = storedCachePoints as number;
 
   // Add a rectangle to the map to represent the cache
   const rect = leaflet.rectangle(bounds);
@@ -202,7 +208,6 @@ function generateCells() {
       }
     }
   }
-  console.log(cellMap);
 }
 
 ////////////////////////////////////////////////////
@@ -212,18 +217,6 @@ function generateCells() {
 function saveCell(p: Point, cachePoints: number) {
   cellMap.set(pointIndexToString(p), cachePoints);
 }
-
-// function loadCell(p: Point) {
-//   const pts = cellMap.get(pointIndexToString(p));
-//   if (pts == 0) {
-
-//   } else {
-
-//   }
-// }
-
-// function loadAllCells() {
-// }
 
 ////////////////////////////////////////////////////
 /////////////// HELPER FUNCTIONS ///////////////////
