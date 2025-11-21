@@ -145,6 +145,8 @@ function check_win(just_made: number) {
 //////////////// CELL GENERATION ///////////////////
 ////////////////////////////////////////////////////
 
+const cellMap = new Map<string, number>();
+
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
   const bounds = leaflet.latLngBounds([
@@ -168,8 +170,10 @@ function spawnCache(i: number, j: number) {
 
   rect.on("click", () => {
     if (distance_to_player(i, j) >= RANGE) return;
+
     if (playerInventory == 0) {
       playerInventory = cachePoints;
+      cachePoints = 0;
       rect.remove();
       statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
     } else if (playerInventory == cachePoints) {
@@ -177,8 +181,10 @@ function spawnCache(i: number, j: number) {
       playerInventory = 0;
       statusPanelDiv.innerHTML = `Merged!`;
       check_win(cachePoints);
-    }
+    } else return;
+
     tooltip.setContent(cachePoints.toString());
+    saveCell({ x: i, y: j }, cachePoints);
   });
 }
 
@@ -196,11 +202,36 @@ function generateCells() {
       }
     }
   }
+  console.log(cellMap);
 }
+
+////////////////////////////////////////////////////
+/////////////// SAVING CELL STATE //////////////////
+////////////////////////////////////////////////////
+
+function saveCell(p: Point, cachePoints: number) {
+  cellMap.set(pointIndexToString(p), cachePoints);
+}
+
+// function loadCell(p: Point) {
+//   const pts = cellMap.get(pointIndexToString(p));
+//   if (pts == 0) {
+
+//   } else {
+
+//   }
+// }
+
+// function loadAllCells() {
+// }
 
 ////////////////////////////////////////////////////
 /////////////// HELPER FUNCTIONS ///////////////////
 ////////////////////////////////////////////////////
+
+function pointIndexToString(p: Point) {
+  return p.x.toString() + " " + p.y.toString();
+}
 
 function indexToCoord(i: number) {
   return i * TILE_DEGREES;

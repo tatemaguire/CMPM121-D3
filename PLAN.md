@@ -17,7 +17,7 @@ In this game, you will be merging globs of slime with other globs of slime of eq
 Key technical challenge: Can you assemble a map-based user interface using the Leaflet mapping framework?
 Key gameplay challenge: Can players collect and craft tokens from nearby locations to finally make one of sufficiently high value?
 
-#### Steps
+#### Steps for a
 
 - [x] copy main.ts to reference.ts for future reference
 - [x] put a basic leaflet map on the screen
@@ -39,7 +39,7 @@ Key gameplay challenge: Can players collect and craft tokens from nearby locatio
 Key technical challenge: Can you make cell generation react to player movement and map scrolling?
 Key gameplay challenge: Can players reach the win condition?
 
-#### Steps
+#### Steps for b
 
 - [x] Create functions for index to coordinate conversion
 - [x] Create generate cells function to spawn cells around the given location
@@ -55,6 +55,7 @@ Key gameplay challenge: Can players reach the win condition?
 
 ### D3.c
 
-#### Steps
+#### Steps for c
 
-- [ ] Use temp layerGroup to avoid overwriting previous rectangles on generate cells
+- [x] Use a Map to keep track of altered cells
+- [ ] Restore altered cell states after generating cells
