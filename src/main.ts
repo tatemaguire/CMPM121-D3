@@ -17,52 +17,34 @@ interface Point {
 ////////////////// UI ELEMENTS /////////////////////
 ////////////////////////////////////////////////////
 
-const controlPanelDiv = document.createElement("div");
-controlPanelDiv.id = "controlPanel";
-document.body.append(controlPanelDiv);
+function makeDiv(id: string): HTMLDivElement {
+  const div = document.createElement("div");
+  div.id = id;
+  document.body.append(div);
+  return div;
+}
 
-const mapDiv = document.createElement("div");
-mapDiv.id = "map";
-document.body.append(mapDiv);
-
-const statusPanelDiv = document.createElement("div");
-statusPanelDiv.id = "statusPanel";
-statusPanelDiv.innerHTML = "No points yet...";
-document.body.append(statusPanelDiv);
+makeDiv("controlPanel");
+const mapDiv = makeDiv("map");
+const statusPanelDiv = makeDiv("statusPanel");
 
 // Movement Buttons (For testing)
+const buttonPanelDiv = makeDiv("buttonPanel");
 
-const buttonPanelDiv = document.createElement("div");
-buttonPanelDiv.id = "buttonPanel";
-document.body.append(buttonPanelDiv);
+function makeButtonDebugMove(text: string, delta: Point) {
+  const buttonDebugMove = document.createElement("button");
+  buttonDebugMove.innerHTML = text;
+  buttonDebugMove.addEventListener("click", () => {
+    movePlayer(delta);
+  });
+  buttonPanelDiv.appendChild(buttonDebugMove);
+  return buttonDebugMove;
+}
 
-const leftButton = document.createElement("button");
-leftButton.innerHTML = "MOVE: Left";
-leftButton.addEventListener("click", () => {
-  move_player({ x: -1, y: 0 });
-});
-
-const rightButton = document.createElement("button");
-rightButton.innerHTML = "MOVE: Right";
-rightButton.addEventListener("click", () => {
-  move_player({ x: 1, y: 0 });
-});
-
-const upButton = document.createElement("button");
-upButton.innerHTML = "MOVE: Up";
-upButton.addEventListener("click", () => {
-  move_player({ x: 0, y: 1 });
-});
-
-const downButton = document.createElement("button");
-downButton.innerHTML = "MOVE: Down";
-downButton.addEventListener("click", () => {
-  move_player({ x: 0, y: -1 });
-});
-buttonPanelDiv.appendChild(leftButton);
-buttonPanelDiv.appendChild(rightButton);
-buttonPanelDiv.appendChild(upButton);
-buttonPanelDiv.appendChild(downButton);
+makeButtonDebugMove("LEFT", { x: -1, y: 0 });
+makeButtonDebugMove("RIGHT", { x: 1, y: 0 });
+makeButtonDebugMove("UP", { x: 0, y: 1 });
+makeButtonDebugMove("DOWN", { x: 0, y: -1 });
 
 ////////////////////////////////////////////////////
 //////////////////// CONSTANTS /////////////////////
@@ -79,6 +61,7 @@ const TILE_DEGREES = 1e-4;
 const NEIGHBORHOOD_SIZE = 20;
 const CACHE_SPAWN_PROBABILITY = 0.1;
 const RANGE = 4;
+const SCORE_GOAL = 32;
 
 ////////////////////////////////////////////////////
 ///////////////// LEAFLET SETUP ////////////////////
@@ -99,7 +82,7 @@ map.on("moveend", generateCells);
 // Populate the map with a background tile layer
 leaflet
   .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
+    maxZoom: GAMEPLAY_ZOOM_LEVEL,
     attribution:
       '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   })
@@ -119,24 +102,24 @@ playerMarker.addTo(map);
 let playerInventory = 0;
 const playerPosition = CLASSROOM_LATLNG;
 
-function move_player(dir: Point) {
-  playerPosition.lat += indexToCoord(dir.y);
-  playerPosition.lng += indexToCoord(dir.x);
+function movePlayer(delta: Point) {
+  playerPosition.lat += indexToCoord(delta.y);
+  playerPosition.lng += indexToCoord(delta.x);
   playerMarker.remove();
   playerMarker = leaflet.marker(playerPosition);
   playerMarker.bindTooltip("That's you!");
   playerMarker.addTo(map);
 }
 
-function distance_to_player(i: number, j: number) {
+function distanceToPlayer(p: Point) {
   const playerPoint = pointCoordToIndex(playerPosition);
-  const dx = i - playerPoint.x;
-  const dy = j - playerPoint.y;
+  const dx = p.x - playerPoint.x;
+  const dy = p.y - playerPoint.y;
   return Math.sqrt((dx ** 2) + (dy ** 2));
 }
 
-function check_win(just_made: number) {
-  if (just_made >= 32) {
+function checkWin(just_made: number) {
+  if (just_made >= SCORE_GOAL) {
     statusPanelDiv.innerHTML = "You won!! Great job making " + just_made;
   }
 }
@@ -147,6 +130,10 @@ function check_win(just_made: number) {
 
 const cellMap = new Map<string, number>();
 
+function saveCell(p: Point, cachePoints: number) {
+  cellMap.set(pointIndexToString(p), cachePoints);
+}
+
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
   const bounds = leaflet.latLngBounds([
@@ -154,16 +141,16 @@ function spawnCache(i: number, j: number) {
     pointIndexToCoord({ x: i + 1, y: j + 1 }),
   ]);
 
-  // get cachePoints from cellMap if it exists, otherwise generate value
-  let storedCachePoints = cellMap.get(pointIndexToString({ x: i, y: j }));
-  if (storedCachePoints == 0) return;
-  if (storedCachePoints == undefined) {
-    storedCachePoints = Math.pow(
-      2,
-      Math.floor(luck([i, j, "init"].toString()) * 4),
-    );
+  // get cachePoints from cellMap, 0 indicates there's no cache at the cell
+  const storedCachePoints = cellMap.get(pointIndexToString({ x: i, y: j }));
+  if (storedCachePoints === 0) return;
+
+  let cachePoints: number;
+  if (storedCachePoints) {
+    cachePoints = storedCachePoints;
+  } else {
+    cachePoints = Math.pow(2, Math.floor(luck([i, j, "init"].toString()) * 4));
   }
-  let cachePoints = storedCachePoints as number;
 
   // Add a rectangle to the map to represent the cache
   const rect = leaflet.rectangle(bounds);
@@ -175,18 +162,20 @@ function spawnCache(i: number, j: number) {
   rect.bindTooltip(tooltip);
 
   rect.on("click", () => {
-    if (distance_to_player(i, j) >= RANGE) return;
+    if (distanceToPlayer({ x: i, y: j }) >= RANGE) return;
 
-    if (playerInventory == 0) {
+    if (playerInventory === 0) {
+      // pick up
       playerInventory = cachePoints;
       cachePoints = 0;
-      rect.remove();
       statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
-    } else if (playerInventory == cachePoints) {
-      cachePoints *= 2;
+      rect.remove();
+    } else if (playerInventory === cachePoints) {
+      // merge
       playerInventory = 0;
+      cachePoints *= 2;
       statusPanelDiv.innerHTML = `Merged!`;
-      check_win(cachePoints);
+      checkWin(cachePoints);
     } else return;
 
     tooltip.setContent(cachePoints.toString());
@@ -208,14 +197,6 @@ function generateCells() {
       }
     }
   }
-}
-
-////////////////////////////////////////////////////
-/////////////// SAVING CELL STATE //////////////////
-////////////////////////////////////////////////////
-
-function saveCell(p: Point, cachePoints: number) {
-  cellMap.set(pointIndexToString(p), cachePoints);
 }
 
 ////////////////////////////////////////////////////
