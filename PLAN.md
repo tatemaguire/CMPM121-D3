@@ -55,8 +55,24 @@ Key gameplay challenge: Can players reach the win condition?
 
 ### D3.c
 
+Key technical challenge: implementing a data structure to keep track of altered cells
+Key gameplay challenge: make the map feel permanent, it should be a smooth experience for the player
+
 #### Steps for c
 
 - [x] Use a Map to keep track of altered cells
 - [x] Restore altered cell states after generating cells
 - [x] Clean up
+
+### D3.d
+
+Key technical challenge: implementing geolocation and local storage
+Key gameplay challenge: making the switch between buttons and geolocation feel smooth
+
+#### Steps for d
+
+- [x] isolate player movement into a separate navigator class
+- [x] implement geolocation watching in this class
+- [x] allow the ability to switch between different movement types
+- [ ] use a button to let the player switch
+- [ ] implement local storage of game state

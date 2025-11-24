@@ -5,13 +5,85 @@ import luck from "./_luck.ts";
 import "./style.css";
 
 ////////////////////////////////////////////////////
-/////////////////// INTERFACES /////////////////////
+//////////////////// CONSTANTS /////////////////////
+////////////////////////////////////////////////////
+
+const CLASSROOM_LATLNG = leaflet.latLng(
+  36.997936938057016,
+  -122.05703507501151,
+);
+
+// Tunable gameplay parameters
+const GAMEPLAY_ZOOM_LEVEL = 19;
+const TILE_DEGREES = 1e-4;
+const NEIGHBORHOOD_SIZE = 20;
+const CACHE_SPAWN_PROBABILITY = 0.1;
+const RANGE = 4;
+const SCORE_GOAL = 32;
+
+////////////////////////////////////////////////////
+//////////////// INTERFACES/CLASSES ////////////////
 ////////////////////////////////////////////////////
 
 interface Point {
   x: number;
   y: number;
 }
+
+class PlayerNavigator {
+  position: leaflet.LatLng;
+  #geolocationBased: boolean;
+  #watchID: number | null;
+  constructor(geolocationBased: boolean) {
+    this.position = CLASSROOM_LATLNG;
+    this.#geolocationBased = geolocationBased;
+    this.#watchID = null;
+
+    // initialize watcher
+    if (this.#geolocationBased) {
+      this.#createGeolocationWatcher();
+    }
+  }
+  setGeolocationBased(geolocationBased: boolean) {
+    this.#geolocationBased = geolocationBased;
+    if (this.#geolocationBased) {
+      // start watching player's geolocation
+      this.#createGeolocationWatcher();
+    } else {
+      // stop watching player's geolocation
+      navigator.geolocation.clearWatch(this.#watchID!);
+    }
+  }
+  manuallyMovePlayer(delta: leaflet.LatLng) {
+    if (!this.#geolocationBased) {
+      this.position.lat += delta.lat;
+      this.position.lng += delta.lng;
+      this.#updatePlayerMarker();
+    }
+  }
+  #createGeolocationWatcher() {
+    this.#watchID = navigator.geolocation.watchPosition(
+      (pos: GeolocationPosition) => {
+        this.position.lat = pos.coords.latitude;
+        this.position.lng = pos.coords.longitude;
+        this.#updatePlayerMarker();
+      },
+      () => {
+        // if it fails, go back to buttons
+        this.setGeolocationBased(false);
+      },
+    );
+  }
+  #updatePlayerMarker() {
+    playerMarker.remove();
+    playerMarker = leaflet.marker(this.position);
+    playerMarker.bindTooltip("That's you!");
+    playerMarker.addTo(map);
+    map.setView(this.position);
+  }
+}
+
+const playerNav = new PlayerNavigator(true);
 
 ////////////////////////////////////////////////////
 ////////////////// UI ELEMENTS /////////////////////
@@ -31,37 +103,20 @@ const statusPanelDiv = makeDiv("statusPanel");
 // Movement Buttons (For testing)
 const buttonPanelDiv = makeDiv("buttonPanel");
 
-function makeButtonDebugMove(text: string, delta: Point) {
+function makeButtonMove(text: string, delta: leaflet.LatLng) {
   const buttonDebugMove = document.createElement("button");
   buttonDebugMove.innerHTML = text;
   buttonDebugMove.addEventListener("click", () => {
-    movePlayer(delta);
+    playerNav.manuallyMovePlayer(delta);
   });
   buttonPanelDiv.appendChild(buttonDebugMove);
   return buttonDebugMove;
 }
 
-makeButtonDebugMove("LEFT", { x: -1, y: 0 });
-makeButtonDebugMove("RIGHT", { x: 1, y: 0 });
-makeButtonDebugMove("UP", { x: 0, y: 1 });
-makeButtonDebugMove("DOWN", { x: 0, y: -1 });
-
-////////////////////////////////////////////////////
-//////////////////// CONSTANTS /////////////////////
-////////////////////////////////////////////////////
-
-const CLASSROOM_LATLNG = leaflet.latLng(
-  36.997936938057016,
-  -122.05703507501151,
-);
-
-// Tunable gameplay parameters
-const GAMEPLAY_ZOOM_LEVEL = 19;
-const TILE_DEGREES = 1e-4;
-const NEIGHBORHOOD_SIZE = 20;
-const CACHE_SPAWN_PROBABILITY = 0.1;
-const RANGE = 4;
-const SCORE_GOAL = 32;
+makeButtonMove("LEFT", leaflet.latLng(0, -TILE_DEGREES));
+makeButtonMove("RIGHT", leaflet.latLng(0, TILE_DEGREES));
+makeButtonMove("UP", leaflet.latLng(TILE_DEGREES, 0));
+makeButtonMove("DOWN", leaflet.latLng(-TILE_DEGREES, 0));
 
 ////////////////////////////////////////////////////
 ///////////////// LEAFLET SETUP ////////////////////
@@ -100,19 +155,9 @@ playerMarker.addTo(map);
 ////////////////////////////////////////////////////
 
 let playerInventory = 0;
-const playerPosition = CLASSROOM_LATLNG;
-
-function movePlayer(delta: Point) {
-  playerPosition.lat += indexToCoord(delta.y);
-  playerPosition.lng += indexToCoord(delta.x);
-  playerMarker.remove();
-  playerMarker = leaflet.marker(playerPosition);
-  playerMarker.bindTooltip("That's you!");
-  playerMarker.addTo(map);
-}
 
 function distanceToPlayer(p: Point) {
-  const playerPoint = pointCoordToIndex(playerPosition);
+  const playerPoint = pointCoordToIndex(playerNav.position);
   const dx = p.x - playerPoint.x;
   const dy = p.y - playerPoint.y;
   return Math.sqrt((dx ** 2) + (dy ** 2));
