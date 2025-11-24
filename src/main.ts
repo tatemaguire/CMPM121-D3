@@ -32,30 +32,31 @@ interface Point {
 
 class PlayerNavigator {
   position: leaflet.LatLng;
-  #geolocationBased: boolean;
+  geolocationBased: boolean;
   #watchID: number | null;
   constructor(geolocationBased: boolean) {
     this.position = CLASSROOM_LATLNG;
-    this.#geolocationBased = geolocationBased;
+    this.geolocationBased = geolocationBased;
     this.#watchID = null;
 
     // initialize watcher
-    if (this.#geolocationBased) {
+    if (this.geolocationBased) {
       this.#createGeolocationWatcher();
     }
   }
   setGeolocationBased(geolocationBased: boolean) {
-    this.#geolocationBased = geolocationBased;
-    if (this.#geolocationBased) {
+    this.geolocationBased = geolocationBased;
+    if (this.geolocationBased) {
       // start watching player's geolocation
       this.#createGeolocationWatcher();
     } else {
       // stop watching player's geolocation
       navigator.geolocation.clearWatch(this.#watchID!);
     }
+    udpateMovementModeButtonText();
   }
   manuallyMovePlayer(delta: leaflet.LatLng) {
-    if (!this.#geolocationBased) {
+    if (!this.geolocationBased) {
       this.position.lat += delta.lat;
       this.position.lng += delta.lng;
       this.#updatePlayerMarker();
@@ -100,7 +101,7 @@ makeDiv("controlPanel");
 const mapDiv = makeDiv("map");
 const statusPanelDiv = makeDiv("statusPanel");
 
-// Movement Buttons (For testing)
+// Movement Buttons
 const buttonPanelDiv = makeDiv("buttonPanel");
 
 function makeButtonMove(text: string, delta: leaflet.LatLng) {
@@ -117,6 +118,26 @@ makeButtonMove("LEFT", leaflet.latLng(0, -TILE_DEGREES));
 makeButtonMove("RIGHT", leaflet.latLng(0, TILE_DEGREES));
 makeButtonMove("UP", leaflet.latLng(TILE_DEGREES, 0));
 makeButtonMove("DOWN", leaflet.latLng(-TILE_DEGREES, 0));
+
+// Settings for switching between geolocation and buttons, and new game
+document.body.appendChild(document.createElement("br"));
+const settingsDiv = makeDiv("settingsPanel");
+const movementModeButton = document.createElement("button");
+movementModeButton.id = "movementMode";
+movementModeButton.addEventListener("click", () => {
+  playerNav.setGeolocationBased(!playerNav.geolocationBased);
+  udpateMovementModeButtonText();
+});
+udpateMovementModeButtonText();
+settingsDiv.appendChild(movementModeButton);
+
+function udpateMovementModeButtonText() {
+  if (playerNav.geolocationBased) {
+    movementModeButton.innerHTML = "Switch to Button Movement";
+  } else {
+    movementModeButton.innerHTML = "Switch to Geolocation Movement";
+  }
+}
 
 ////////////////////////////////////////////////////
 ///////////////// LEAFLET SETUP ////////////////////

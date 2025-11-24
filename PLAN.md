@@ -74,5 +74,5 @@ Key gameplay challenge: making the switch between buttons and geolocation feel s
 - [x] isolate player movement into a separate navigator class
 - [x] implement geolocation watching in this class
 - [x] allow the ability to switch between different movement types
-- [ ] use a button to let the player switch
+- [x] use a button to let the player switch
 - [ ] implement local storage of game state
