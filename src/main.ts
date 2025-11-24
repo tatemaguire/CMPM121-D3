@@ -19,7 +19,7 @@ const TILE_DEGREES = 1e-4;
 const NEIGHBORHOOD_SIZE = 20;
 const CACHE_SPAWN_PROBABILITY = 0.1;
 const RANGE = 4;
-const SCORE_GOAL = 32;
+const SCORE_GOAL = 64;
 
 ////////////////////////////////////////////////////
 //////////////// INTERFACES/CLASSES ////////////////
@@ -53,7 +53,7 @@ class PlayerNavigator {
       // stop watching player's geolocation
       navigator.geolocation.clearWatch(this.#watchID!);
     }
-    udpateMovementModeButtonText();
+    updateMovementModeButtonText();
   }
   manuallyMovePlayer(delta: leaflet.LatLng) {
     if (!this.geolocationBased) {
@@ -101,6 +101,10 @@ makeDiv("controlPanel");
 const mapDiv = makeDiv("map");
 const statusPanelDiv = makeDiv("statusPanel");
 
+function updateStatusPanelDiv() {
+  statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+}
+
 // Movement Buttons
 const buttonPanelDiv = makeDiv("buttonPanel");
 
@@ -126,17 +130,15 @@ const movementModeButton = document.createElement("button");
 movementModeButton.id = "movementMode";
 movementModeButton.addEventListener("click", () => {
   playerNav.setGeolocationBased(!playerNav.geolocationBased);
-  udpateMovementModeButtonText();
+  updateMovementModeButtonText();
 });
-udpateMovementModeButtonText();
+updateMovementModeButtonText();
 settingsDiv.appendChild(movementModeButton);
 
-function udpateMovementModeButtonText() {
-  if (playerNav.geolocationBased) {
-    movementModeButton.innerHTML = "Switch to Button Movement";
-  } else {
-    movementModeButton.innerHTML = "Switch to Geolocation Movement";
-  }
+function updateMovementModeButtonText() {
+  movementModeButton.innerHTML = playerNav.geolocationBased
+    ? "Switch to Button Movement"
+    : "Switch to Geolocation Movement";
 }
 
 const newGameButton = document.createElement("button");
@@ -241,7 +243,7 @@ function spawnCache(i: number, j: number) {
       // pick up
       playerInventory = cachePoints;
       cachePoints = 0;
-      statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+      updateStatusPanelDiv();
       rect.remove();
     } else if (playerInventory === cachePoints) {
       // merge
@@ -289,7 +291,7 @@ function loadSaveState() {
   const storedInventory = localStorage.getItem("playerInventory");
   if (storedInventory) {
     playerInventory = Number(storedInventory);
-    statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+    updateStatusPanelDiv();
   }
 
   const storedCellMap = localStorage.getItem("cellMap");
@@ -302,7 +304,7 @@ function loadSaveState() {
 function clearSaveState() {
   localStorage.clear();
   playerInventory = 0;
-  statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+  updateStatusPanelDiv();
   cellMap = new Map();
   generateCells();
   updateSaveState();

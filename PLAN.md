@@ -80,4 +80,4 @@ Key gameplay challenge: making the switch between buttons and geolocation feel s
 - [x] save and load player inventory
 - [x] implement function to clear storage and start newgame
 - [x] create button to start new game
-- [ ] clean up
+- [x] clean up
