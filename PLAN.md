@@ -81,3 +81,4 @@ Key gameplay challenge: making the switch between buttons and geolocation feel s
 - [x] implement function to clear storage and start newgame
 - [x] create button to start new game
 - [x] clean up
+- [x] update score goal to 64
