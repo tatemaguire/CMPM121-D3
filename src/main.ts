@@ -198,6 +198,7 @@ const cellMap = new Map<string, number>();
 
 function saveCell(p: Point, cachePoints: number) {
   cellMap.set(pointIndexToString(p), cachePoints);
+  updateSaveState();
 }
 
 function spawnCache(i: number, j: number) {
@@ -264,6 +265,28 @@ function generateCells() {
     }
   }
 }
+
+////////////////////////////////////////////////////
+//////////////////// SAVE STATE ////////////////////
+////////////////////////////////////////////////////
+
+function updateSaveState() {
+  localStorage.setItem("playerInventory", playerInventory.toString());
+}
+
+function loadSaveState() {
+  const storedInventory = localStorage.getItem("playerInventory");
+  if (storedInventory) {
+    playerInventory = Number(storedInventory);
+    statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+  }
+}
+
+// function clearSaveState() {
+//   localStorage.clear();
+// }
+
+loadSaveState();
 
 ////////////////////////////////////////////////////
 /////////////// HELPER FUNCTIONS ///////////////////
