@@ -139,6 +139,12 @@ function udpateMovementModeButtonText() {
   }
 }
 
+const newGameButton = document.createElement("button");
+newGameButton.id = "newGame";
+newGameButton.innerHTML = "New Game";
+newGameButton.addEventListener("click", clearSaveState);
+settingsDiv.appendChild(newGameButton);
+
 ////////////////////////////////////////////////////
 ///////////////// LEAFLET SETUP ////////////////////
 ////////////////////////////////////////////////////
@@ -194,7 +200,7 @@ function checkWin(just_made: number) {
 //////////////// CELL GENERATION ///////////////////
 ////////////////////////////////////////////////////
 
-const cellMap = new Map<string, number>();
+let cellMap = new Map<string, number>();
 
 function saveCell(p: Point, cachePoints: number) {
   cellMap.set(pointIndexToString(p), cachePoints);
@@ -272,6 +278,11 @@ function generateCells() {
 
 function updateSaveState() {
   localStorage.setItem("playerInventory", playerInventory.toString());
+
+  localStorage.setItem(
+    "cellMap",
+    JSON.stringify(Array.from(cellMap.entries())),
+  );
 }
 
 function loadSaveState() {
@@ -280,11 +291,22 @@ function loadSaveState() {
     playerInventory = Number(storedInventory);
     statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
   }
+
+  const storedCellMap = localStorage.getItem("cellMap");
+  if (storedCellMap) {
+    cellMap = new Map(JSON.parse(storedCellMap));
+    generateCells();
+  }
 }
 
-// function clearSaveState() {
-//   localStorage.clear();
-// }
+function clearSaveState() {
+  localStorage.clear();
+  playerInventory = 0;
+  statusPanelDiv.innerHTML = `You are carrying: ${playerInventory}`;
+  cellMap = new Map();
+  generateCells();
+  updateSaveState();
+}
 
 loadSaveState();
 

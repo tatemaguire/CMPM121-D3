@@ -75,8 +75,9 @@ Key gameplay challenge: making the switch between buttons and geolocation feel s
 - [x] implement geolocation watching in this class
 - [x] allow the ability to switch between different movement types
 - [x] use a button to let the player switch
-- [ ] implement saving the cellMap into localStorage
-- [ ] implement loading the cellMap out of storage
+- [x] implement saving the cellMap into localStorage
+- [x] implement loading the cellMap out of storage
 - [x] save and load player inventory
-- [ ] implement function to clear storage and start newgame
-- [ ] create button to start new game
+- [x] implement function to clear storage and start newgame
+- [x] create button to start new game
+- [ ] clean up
